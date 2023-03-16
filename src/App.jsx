@@ -1,95 +1,237 @@
-import React from "react";
-import { Container, Stack, TextField, Button } from "@mui/material";
-import { styled } from "@mui/system";
-
-import StudentTable from "./components/StudentTable";
-
+import React, { useEffect, useMemo, useState } from "react";
 import LIST_STUDENT from "./shared/students.json";
-import StudentForm from "./components/StudentForm";
-
-const Wrapper = styled(Container)({
-    paddingTop: 20,
-});
+import {
+    Table,
+    TableHead,
+    TableBody,
+    TableRow,
+    TableCell,
+    Box,
+    Button,
+    Stack,
+    TextField,
+} from "@mui/material";
 
 function App() {
-    const [listStudent, setListStudent] = React.useState(LIST_STUDENT);
+    const [listStudent, setListStudent] = useState(LIST_STUDENT);
 
-    const [searchValue, setSearchValue] = React.useState("");
+    const [student, setStudent] = useState({
+        id: Math.max(...listStudent.map((item) => item.id)) + 1,
+        name: "",
+        gender: "Male",
+        class: "",
+    });
 
-    const [search, setSearch] = React.useState("");
+    const [studentSelected, setStudentSelected] = useState();
 
-    const [indexSelected, setIndexSelected] = React.useState(null);
+    const [search, setSearch] = useState("");
 
-    const handleSearch = () => {
-        setSearch(searchValue);
+    const [searchValue, setSearchValue] = useState("");
+
+    const listClass = useMemo(() => {
+        return [...new Set(listStudent.map((student) => student.class))];
+    }, [listStudent]);
+
+    const handleAdd = () => {
+        setListStudent((prev) => [...prev, student]);
     };
 
-    const handleAddStudent = (student) => {
-        if (student) {
-            setListStudent((prev) => [student, ...prev]);
-        }
+    const handleDelete = (id) => {
+        setListStudent((prev) => prev.filter((item) => item.id !== id));
     };
 
-    const handleEdit = (index) => {
-        setIndexSelected(index);
+    const handleEdit = () => {
+        const index = listStudent.findIndex(
+            (item) => item.id === studentSelected.id
+        );
+        let newArray = listStudent;
+        newArray[index] = studentSelected;
+        setListStudent([...newArray]);
     };
 
-    const handleSaveEdit = (student) => {
-        if (student) {
-            let newList = [...listStudent];
-            newList[indexSelected] = student;
-            setListStudent([...newList]);
-            setIndexSelected(null);
-        }
-    };
-
-    const handleDelete = (index) => {
-        let newList = listStudent;
-        if (index > -1) {
-            newList.splice(index, 1);
-        }
-
-        setListStudent([...newList]);
-        setIndexSelected(null);
-    };
-
-    const listStudentFiltered = React.useMemo(() => {
+    const listStudentFilter = useMemo(() => {
         return [
-            ...listStudent.filter((student) => student.name.includes(search)),
+            ...listStudent.filter((student) =>
+                student.name.toLowerCase().includes(searchValue.toLowerCase())
+            ),
         ];
-    }, [search, listStudent]);
+    }, [searchValue, listStudent]);
 
     return (
         <React.Fragment>
-            <Wrapper>
-                <Stack spacing={3}>
-                    <Stack direction="row" spacing={2}>
-                        <TextField
-                            variant="outlined"
-                            placeholder="Search..."
-                            size="small"
-                            value={searchValue}
-                            onChange={(e) => setSearchValue(e.target.value)}
-                        />
-                        <Button
-                            variant="contained"
-                            onClick={() => {
-                                handleSearch();
-                            }}
-                        >
-                            Search
-                        </Button>
-                    </Stack>
-                    <StudentTable
-                        listStudent={listStudentFiltered}
-                        onDelete={handleDelete}
-                        rowSelected={indexSelected}
-                        handleEdit={handleEdit}
-                        handleSaveEdit={handleSaveEdit}
+            <Box
+                sx={{
+                    mt: 5,
+                }}
+            >
+                <Stack direction="row" spacing={2}>
+                    <TextField
+                        label="Search"
+                        variant="outlined"
+                        size="small"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
                     />
-                    <StudentForm name="Add" onClick={handleAddStudent} />
+                    <Button
+                        variant="outlined"
+                        onClick={() => setSearchValue(search)}
+                    >
+                        Search
+                    </Button>
                 </Stack>
-            </Wrapper>
+            </Box>
+            <Box>
+                <input
+                    type="text"
+                    value={student?.name}
+                    onChange={(e) =>
+                        setStudent((prev) => ({
+                            ...prev,
+                            name: e.target.value,
+                        }))
+                    }
+                />
+                Male:{" "}
+                <input
+                    type="radio"
+                    value="Male"
+                    name="gender"
+                    checked={student?.gender === "Male"}
+                    onChange={(e) =>
+                        setStudent((prev) => ({
+                            ...prev,
+                            gender: e.target.value,
+                        }))
+                    }
+                />
+                Female:{" "}
+                <input
+                    type="radio"
+                    value="Female"
+                    name="gender"
+                    checked={student?.gender === "Female"}
+                    onChange={(e) =>
+                        setStudent((prev) => ({
+                            ...prev,
+                            gender: e.target.value,
+                        }))
+                    }
+                />
+                <select
+                    name="class"
+                    onChange={(e) =>
+                        setStudent((prev) => ({
+                            ...prev,
+                            class: e.target.value,
+                        }))
+                    }
+                >
+                    {listClass.map((classItem) => (
+                        <option value={classItem}>{classItem}</option>
+                    ))}
+                </select>
+                <button onClick={() => handleAdd()}>Add</button>
+            </Box>
+            <Table>
+                <TableHead>
+                    <TableRow>
+                        <TableCell>Id</TableCell>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Gender</TableCell>
+                        <TableCell>Class</TableCell>
+                        <TableCell>Action</TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {listStudentFilter.map((student) => (
+                        <TableRow>
+                            <TableCell>{student.id}</TableCell>
+                            <TableCell>{student.name}</TableCell>
+                            <TableCell>{student.gender}</TableCell>
+                            <TableCell>{student.class}</TableCell>
+                            <TableCell>
+                                <Stack direction="row" spacing={2}>
+                                    <Button
+                                        variant="contained"
+                                        onClick={() =>
+                                            setStudentSelected(student)
+                                        }
+                                    >
+                                        Edit
+                                    </Button>
+                                    <Button
+                                        variant="outlined"
+                                        color="error"
+                                        onClick={() => handleDelete(student.id)}
+                                    >
+                                        Delete
+                                    </Button>
+                                </Stack>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+            {studentSelected && (
+                <Box>
+                    <input
+                        type="text"
+                        value={studentSelected?.name}
+                        onChange={(e) =>
+                            setStudentSelected((prev) => ({
+                                ...prev,
+                                name: e.target.value,
+                            }))
+                        }
+                    />
+                    Male:{" "}
+                    <input
+                        type="radio"
+                        value="Male"
+                        name="gender"
+                        checked={studentSelected?.gender === "Male"}
+                        onChange={(e) =>
+                            setStudentSelected((prev) => ({
+                                ...prev,
+                                gender: e.target.value,
+                            }))
+                        }
+                    />
+                    Female:{" "}
+                    <input
+                        type="radio"
+                        value="Female"
+                        name="gender"
+                        checked={studentSelected?.gender === "Female"}
+                        onChange={(e) =>
+                            setStudentSelected((prev) => ({
+                                ...prev,
+                                gender: e.target.value,
+                            }))
+                        }
+                    />
+                    <select
+                        name="class"
+                        onChange={(e) =>
+                            setStudentSelected((prev) => ({
+                                ...prev,
+                                class: e.target.value,
+                            }))
+                        }
+                    >
+                        {listClass.map((classItem) => (
+                            <option value={classItem}>{classItem}</option>
+                        ))}
+                    </select>
+                    <button
+                        onClick={() => {
+                            handleEdit();
+                        }}
+                    >
+                        Edit
+                    </button>
+                </Box>
+            )}
         </React.Fragment>
     );
 }
