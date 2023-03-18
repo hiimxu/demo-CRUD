@@ -10,7 +10,15 @@ import {
     Button,
     Stack,
     TextField,
+    IconButton,
+    Tooltip,
+    Dialog,
+    DialogActions,
+    DialogTitle,
+    DialogContent,
 } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 function App() {
     const [listStudent, setListStudent] = useState(LIST_STUDENT);
@@ -28,6 +36,8 @@ function App() {
 
     const [searchValue, setSearchValue] = useState("");
 
+    const [openDialog, setOpenDialog] = useState(false);
+
     const listClass = useMemo(() => {
         return [...new Set(listStudent.map((student) => student.class))];
     }, [listStudent]);
@@ -38,6 +48,8 @@ function App() {
 
     const handleDelete = (id) => {
         setListStudent((prev) => prev.filter((item) => item.id !== id));
+        setStudentSelected(undefined);
+        setOpenDialog(false);
     };
 
     const handleEdit = () => {
@@ -59,6 +71,29 @@ function App() {
 
     return (
         <React.Fragment>
+            <React.Fragment>
+                <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+                    <DialogTitle>Confirm delete</DialogTitle>
+                    <DialogContent>
+                        Do you want delete this student?
+                    </DialogContent>
+                    <DialogActions>
+                        <Button
+                            variant="contained"
+                            onClick={() => handleDelete(studentSelected?.id)}
+                        >
+                            Submit
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            onClick={() => setOpenDialog(false)}
+                        >
+                            Cancel
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </React.Fragment>
             <Box
                 sx={{
                     mt: 5,
@@ -151,21 +186,30 @@ function App() {
                             <TableCell>{student.class}</TableCell>
                             <TableCell>
                                 <Stack direction="row" spacing={2}>
-                                    <Button
-                                        variant="contained"
-                                        onClick={() =>
-                                            setStudentSelected(student)
-                                        }
-                                    >
-                                        Edit
-                                    </Button>
-                                    <Button
-                                        variant="outlined"
-                                        color="error"
-                                        onClick={() => handleDelete(student.id)}
-                                    >
-                                        Delete
-                                    </Button>
+                                    <Tooltip title="Edit">
+                                        <IconButton
+                                            onClick={() =>
+                                                setStudentSelected(student)
+                                            }
+                                            color="primary"
+                                        >
+                                            <EditIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Delete">
+                                        <IconButton
+                                            color="error"
+                                            // onClick={() =>
+                                            //     handleDelete(student.id)
+                                            // }
+                                            onClick={() => {
+                                                setOpenDialog(true);
+                                                setStudentSelected(student);
+                                            }}
+                                        >
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </Tooltip>
                                 </Stack>
                             </TableCell>
                         </TableRow>
